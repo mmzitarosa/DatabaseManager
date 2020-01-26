@@ -14,6 +14,24 @@ public class SqlUtil {
         return classType.getSimpleName();
     }
 
+    public static String tableFromTablePath(String tablePath) {
+        if (tablePath == null)
+            return "";
+        tablePath = tablePath.replace("'", "");
+        if (tablePath.contains("."))
+            return tablePath.substring(tablePath.lastIndexOf("." + 1));
+        return tablePath;
+    }
+
+    public static String tablePathAlias(Field field, String tablePath) {
+        if (tablePath == null)
+            tablePath = field.getName();
+        else
+            tablePath = tablePath + "." + field.getName();
+        tablePath = tablePath.replace("'", "");
+        return tablePath.replace(".", "") + "Alias";
+    }
+
     public static String columnNameFromField(Field field) {
         if (!hasAnnotation(field, ForeignKey.class))
             return field.getName();
@@ -21,6 +39,16 @@ public class SqlUtil {
             // TODO cosa fare in questo caso?
         }
         return "id" + Util.capitalize(field.getName());
+    }
+
+    public static String columnAliasFromField(Field field, String tablePath, boolean id) {
+        if (tablePath == null)
+            tablePath = "";
+        else {
+            tablePath = tablePath.replace("'", "");
+            tablePath += ".";
+        }
+        return tablePath + columnNameFromField(field) + ((field.getAnnotation(Id.class) != null && id) ? "@Id" : "");
     }
 
     public static Field primaryKeyFieldFromClass(Class<?> tableClass) {

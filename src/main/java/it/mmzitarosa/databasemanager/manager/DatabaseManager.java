@@ -1,6 +1,8 @@
 package it.mmzitarosa.databasemanager.manager;
 
-import it.mmzitarosa.databasemanager.annotation.*;
+import it.mmzitarosa.databasemanager.annotation.Auto;
+import it.mmzitarosa.databasemanager.annotation.ForeignKey;
+import it.mmzitarosa.databasemanager.annotation.Required;
 import it.mmzitarosa.databasemanager.io.StatusCode;
 import it.mmzitarosa.databasemanager.manager.sql.SqlGenerator;
 import it.mmzitarosa.databasemanager.util.GsonManager;
@@ -36,7 +38,7 @@ abstract class DatabaseManager {
         String tableSql = SqlGenerator.createTableSql(tableClass);
         execute(tableSql);
         // crea select e join
-        generateSelectAndJoin();
+        System.out.println(SqlGenerator.selectAndJoinSql(tableClass));
     }
 
     /**
@@ -101,49 +103,6 @@ abstract class DatabaseManager {
                 jsonObject.put(explodedColumn[index], fillJsonRecursively(jsonObject.getJSONObject(explodedColumn[index]), explodedColumn, index + 1, value));
             }
             return jsonObject;
-        }
-    }
-
-    private void generateSelectAndJoin() {
-        generateSelectAndJoin(this.tableClass, null);
-        select = select.substring(0, select.length() - 2);
-    }
-
-    private void generateSelectAndJoin(Class<?> tableClass, String tableName) {
-        for (Field field : tableClass.getDeclaredFields()) {
-            String fieldName = field.getName();
-            String tableAlias = tableClass.getSimpleName();
-            String columnAlias = "";
-            String lastName = "";
-            if (tableName != null) {
-                tableAlias = getAlias(tableName);
-                columnAlias = tableName.replace("'", "");
-                if (columnAlias.contains("."))
-                    lastName = columnAlias.substring(columnAlias.lastIndexOf(".") + 1);
-                else
-                    lastName = columnAlias;
-            }
-
-            if (field.getAnnotation(ForeignKey.class) != null && !fieldName.equals(lastName)) {
-                if (tableName != null) {
-                    fieldName = "'" + tableName + "." + fieldName + "'";
-                }
-
-                if (field.getAnnotation(Required.class) != null) {
-                    joinClause += " INNER";
-                } else {
-                    joinClause += " LEFT";
-                }
-                joinClause += " JOIN ";
-                joinClause += field.getType().getSimpleName() + " " + getAlias(fieldName);
-                joinClause += " ON ";
-                joinClause += tableAlias + "." + getColumnName(field) + " = " + getAlias(fieldName) + "." + getPrimaryKey(field.getType()).getName();
-
-                generateSelectAndJoin(field.getType(), fieldName);
-
-            } else {
-                select += tableAlias + "." + getColumnName(field) + " '" + columnAlias.replace("'", "") + "." + getColumnName(field) + ((field.getAnnotation(Id.class) != null) ? "@Id" : "") + "', ";
-            }
         }
     }
 
@@ -260,19 +219,6 @@ abstract class DatabaseManager {
             // TODO cosa fare in questo caso?
         }
         return "id" + Util.capitalize(field.getName());
-    }
-
-    private Field getPrimaryKey(Class<?> tableClass) {
-        for (Field field : tableClass.getDeclaredFields()) {
-            if (field.getAnnotation(Id.class) != null)
-                return field;
-        }
-        return null;
-    }
-
-    private static String getAlias(String string) {
-        string = string.replace("'", "");
-        return string.replace(".", "") + "Alias";
     }
 
     /**

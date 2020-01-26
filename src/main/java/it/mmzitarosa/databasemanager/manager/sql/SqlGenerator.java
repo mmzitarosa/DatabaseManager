@@ -135,4 +135,41 @@ public class SqlGenerator {
         }
     }
 
+    private static String newSelect = "";
+    private static String newJoinClause = "";
+
+    public static String selectAndJoinSql(Class<?> classType) {
+        newSelect = "";
+        newJoinClause = "";
+        selectSql(classType, null);
+        newSelect = newSelect.substring(0, newSelect.length() - 2);
+
+        String query = "SELECT " + newSelect + " FROM " + SqlUtil.tableNameFromClass(classType) + newJoinClause + ";";
+        return query;
+    }
+
+    private static void selectSql(Class<?> classType, String tablePath) {
+        for (Field field : classType.getDeclaredFields()) {
+            String classNameAlias = (tablePath != null) ? SqlUtil.tablePathAlias(field, tablePath) : SqlUtil.tableNameFromClass(classType) + "Alias";
+            if (SqlUtil.hasAnnotation(field, ForeignKey.class) && !field.getName().equals(SqlUtil.tableFromTablePath(tablePath))) {
+                if (SqlUtil.hasAnnotation(field, Required.class)) {
+                    newJoinClause += " INNER";
+                } else {
+                    newJoinClause += " LEFT";
+                }
+                newJoinClause += " JOIN ";
+                //              test + " " + sottocategoriaAlias
+                newJoinClause += SqlUtil.tableNameFromClass(field.getType()) + " " + classNameAlias;
+                newJoinClause += " ON ";
+                //              test.idsottocategoria = sottocategoriaAlias.id
+                newJoinClause += SqlUtil.columnAliasFromField(field, tablePath, false) + " = " + classNameAlias + "." + SqlUtil.primaryKeyFieldFromClass(field.getType()).getName();
+
+                selectSql(field.getType(), (tablePath != null) ? tablePath + "." + field.getName() : field.getName());
+            } else {
+                newSelect += SqlUtil.tableNameFromClass(classType) + "." + SqlUtil.columnNameFromField(field) + " '" + SqlUtil.columnAliasFromField(field, tablePath, true) + "', ";
+            }
+
+        }
+    }
+
 }
