@@ -1,15 +1,16 @@
 package it.mmzitarosa.databasemanager;
 
-import it.mmzitarosa.databasemanager.manager.CategoriaManager;
-import it.mmzitarosa.databasemanager.model.Categoria;
+import it.mmzitarosa.databasemanager.manager.FatturaEntrataManager;
+import it.mmzitarosa.databasemanager.model.FatturaEntrata;
+import it.mmzitarosa.databasemanager.util.GsonManager;
 
 import java.util.List;
 
 public class MainClass {
 
     public static void main(String[] args) throws Exception {
-        List<Categoria> list = CategoriaManager.getInstance().selectAll();
-        System.out.println("");
+        List<FatturaEntrata> list = FatturaEntrataManager.getInstance().selectAll();
+        System.out.println(GsonManager.getInstance().toJson(list));
     }
 
 }

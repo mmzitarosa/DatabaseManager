@@ -1,6 +1,7 @@
 package it.mmzitarosa.databasemanager.manager.sql;
 
 import it.mmzitarosa.databasemanager.annotation.*;
+import javafx.util.Pair;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -138,14 +139,12 @@ public class SqlGenerator {
     private static String newSelect = "";
     private static String newJoinClause = "";
 
-    public static String selectAndJoinSql(Class<?> classType) {
+    public static Pair<String, String> selectAndJoinSql(Class<?> classType) {
         newSelect = "";
         newJoinClause = "";
         selectSql(classType, null);
         newSelect = newSelect.substring(0, newSelect.length() - 2);
-
-        String query = "SELECT " + newSelect + " FROM " + SqlUtil.tableNameFromClass(classType) + newJoinClause + ";";
-        return query;
+        return new Pair<>(newSelect, newJoinClause);
     }
 
     private static void selectSql(Class<?> classType, String tablePath) {
@@ -153,7 +152,7 @@ public class SqlGenerator {
         String parentTableAlias = (tablePath != null) ? parentTable + "Alias" : parentTable;
         for (Field field : classType.getDeclaredFields()) {
             if (SqlUtil.hasAnnotation(field, ForeignKey.class) && !field.getName().equals(SqlUtil.tableFromTablePath(tablePath))) {
-                parentTableAlias = (tablePath != null) ? parentTable + field.getName() + "Alias" : field.getName() + "Alias";
+                parentTableAlias = (tablePath != null) ? parentTable + field.getName() + "Alias" : field.getName() + "Alias"; // sovrascrivo valore
                 if (SqlUtil.hasAnnotation(field, Required.class)) {
                     newJoinClause += " INNER";
                 } else {
@@ -165,6 +164,7 @@ public class SqlGenerator {
                 newJoinClause += SqlUtil.columnAliasFromField(field, (tablePath == null) ? SqlUtil.tableNameFromClass(classType) : tablePath, false) + " = " + parentTableAlias + "." + SqlUtil.primaryKeyFieldFromClass(field.getType()).getName();
 
                 selectSql(field.getType(), (tablePath != null) ? tablePath + "." + field.getName() : field.getName());
+                parentTableAlias = (tablePath != null) ? parentTable + "Alias" : parentTable; //ripristino valore
             } else {
                 newSelect += parentTableAlias + "." + SqlUtil.columnNameFromField(field) + " '" + SqlUtil.columnAliasFromField(field, tablePath, true) + "', ";
             }

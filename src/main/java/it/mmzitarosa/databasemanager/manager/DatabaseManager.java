@@ -8,6 +8,7 @@ import it.mmzitarosa.databasemanager.manager.sql.SqlGenerator;
 import it.mmzitarosa.databasemanager.util.GsonManager;
 import it.mmzitarosa.databasemanager.util.GuitarBaseException;
 import it.mmzitarosa.databasemanager.util.Util;
+import javafx.util.Pair;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
@@ -28,8 +29,9 @@ abstract class DatabaseManager {
     private String dbUsername;
     private String dbPassword;
 
-    private String select = "";
-    private String joinClause = "";
+    private String select;
+    private String joinClause;
+
 
     DatabaseManager() throws GuitarBaseException {
         loadConfiguration();
@@ -38,7 +40,9 @@ abstract class DatabaseManager {
         String tableSql = SqlGenerator.createTableSql(tableClass);
         execute(tableSql);
         // crea select e join
-        System.out.println(SqlGenerator.selectAndJoinSql(tableClass));
+        Pair<String, String> selectAndJoin = SqlGenerator.selectAndJoinSql(tableClass);
+        select = selectAndJoin.getKey();
+        joinClause = selectAndJoin.getValue();
     }
 
     /**
@@ -57,11 +61,11 @@ abstract class DatabaseManager {
             connection = connect();
             String whereClause = "";//generateWhereClause(jsonCond);
             String query = "SELECT " + select + " FROM " + getTableName() + joinClause + whereClause + ";";
+            System.out.println(query);
             preparedStatement = connection.prepareStatement(query);
 //            if (!"".equalsIgnoreCase(whereClause)) {
 //                fillPreparedStatement(preparedStatement, jsonCond);
 //            }
-            System.out.println(query);
             ResultSet resultSet = preparedStatement.executeQuery();
             result = resultSetToMap(resultSet);
         } catch (SQLException e) {
