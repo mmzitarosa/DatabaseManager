@@ -149,24 +149,24 @@ public class SqlGenerator {
     }
 
     private static void selectSql(Class<?> classType, String tablePath) {
+        String parentTable = (tablePath != null) ? tablePath.replace(".", "") : SqlUtil.tableNameFromClass(classType);
+        String parentTableAlias = (tablePath != null) ? parentTable + "Alias" : parentTable;
         for (Field field : classType.getDeclaredFields()) {
-            String classNameAlias = (tablePath != null) ? SqlUtil.tablePathAlias(field, tablePath) : SqlUtil.tableNameFromClass(classType) + "Alias";
             if (SqlUtil.hasAnnotation(field, ForeignKey.class) && !field.getName().equals(SqlUtil.tableFromTablePath(tablePath))) {
+                parentTableAlias = (tablePath != null) ? parentTable + field.getName() + "Alias" : field.getName() + "Alias";
                 if (SqlUtil.hasAnnotation(field, Required.class)) {
                     newJoinClause += " INNER";
                 } else {
                     newJoinClause += " LEFT";
                 }
                 newJoinClause += " JOIN ";
-                //              test + " " + sottocategoriaAlias
-                newJoinClause += SqlUtil.tableNameFromClass(field.getType()) + " " + classNameAlias;
+                newJoinClause += SqlUtil.tableNameFromClass(field.getType()) + " " + parentTableAlias;
                 newJoinClause += " ON ";
-                //              test.idsottocategoria = sottocategoriaAlias.id
-                newJoinClause += SqlUtil.columnAliasFromField(field, tablePath, false) + " = " + classNameAlias + "." + SqlUtil.primaryKeyFieldFromClass(field.getType()).getName();
+                newJoinClause += SqlUtil.columnAliasFromField(field, (tablePath == null) ? SqlUtil.tableNameFromClass(classType) : tablePath, false) + " = " + parentTableAlias + "." + SqlUtil.primaryKeyFieldFromClass(field.getType()).getName();
 
                 selectSql(field.getType(), (tablePath != null) ? tablePath + "." + field.getName() : field.getName());
             } else {
-                newSelect += SqlUtil.tableNameFromClass(classType) + "." + SqlUtil.columnNameFromField(field) + " '" + SqlUtil.columnAliasFromField(field, tablePath, true) + "', ";
+                newSelect += parentTableAlias + "." + SqlUtil.columnNameFromField(field) + " '" + SqlUtil.columnAliasFromField(field, tablePath, true) + "', ";
             }
 
         }

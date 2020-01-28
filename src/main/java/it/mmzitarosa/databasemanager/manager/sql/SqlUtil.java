@@ -23,15 +23,6 @@ public class SqlUtil {
         return tablePath;
     }
 
-    public static String tablePathAlias(Field field, String tablePath) {
-        if (tablePath == null)
-            tablePath = field.getName();
-        else
-            tablePath = tablePath + "." + field.getName();
-        tablePath = tablePath.replace("'", "");
-        return tablePath.replace(".", "") + "Alias";
-    }
-
     public static String columnNameFromField(Field field) {
         if (!hasAnnotation(field, ForeignKey.class))
             return field.getName();
