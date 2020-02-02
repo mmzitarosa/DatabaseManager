@@ -5,16 +5,13 @@ import it.mmzitarosa.databasemanager.annotation.ForeignKey;
 import it.mmzitarosa.databasemanager.annotation.Required;
 import it.mmzitarosa.databasemanager.io.StatusCode;
 import it.mmzitarosa.databasemanager.manager.sql.SqlGenerator;
-import it.mmzitarosa.databasemanager.util.GsonManager;
+import it.mmzitarosa.databasemanager.manager.sql.SqlUtil;
 import it.mmzitarosa.databasemanager.util.GuitarBaseException;
 import it.mmzitarosa.databasemanager.util.Util;
 import javafx.util.Pair;
-import org.json.JSONObject;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -45,69 +42,31 @@ abstract class DatabaseManager {
         joinClause = selectAndJoin.getValue();
     }
 
-    /**
-     * SELECT
-     */
-
     public <T> List<T> selectAll() throws Exception {
         return select(null);
     }
 
-    protected <T> List<T> select(Map<String, Object> condMap) throws Exception {
+    public <T> List<T> select(Map<String, Object> condMap) throws Exception {
         Connection connection;
         PreparedStatement preparedStatement;
         List<T> result;
         try {
             connection = connect();
-            String whereClause = "";//generateWhereClause(jsonCond);
+            String whereClause = SqlUtil.whereClauseFromMap(getTableName(), condMap);
             String query = "SELECT " + select + " FROM " + getTableName() + joinClause + whereClause + ";";
             System.out.println(query);
             preparedStatement = connection.prepareStatement(query);
-//            if (!"".equalsIgnoreCase(whereClause)) {
-//                fillPreparedStatement(preparedStatement, jsonCond);
-//            }
+            if (!"".equalsIgnoreCase(whereClause)) {
+                SqlUtil.fillPreparedStatement(preparedStatement, condMap);
+            }
             ResultSet resultSet = preparedStatement.executeQuery();
-            result = resultSetToMap(resultSet);
+            result = SqlUtil.resultSetToMap(resultSet, tableClass);
         } catch (SQLException e) {
             throw new DatabaseException(e);
         } catch (ClassNotFoundException e) {
             return null;
         }
         return result;
-    }
-
-    private <T> List<T> resultSetToMap(ResultSet resultSet) throws SQLException, ClassNotFoundException {
-        List<T> list = new ArrayList<>();
-        while (resultSet.next()) {
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            JSONObject jsonObject = new JSONObject();
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                String columnName = metaData.getColumnLabel(i);
-//                jsonObject.put(columnName, resultSet.getObject(i));
-                String x = metaData.getColumnTypeName(i);
-                String t = metaData.getTableName(i);
-                fillJsonRecursively(jsonObject, columnName.split("\\."), 0, resultSet.getObject(i));
-            }
-            list.add((T) GsonManager.getInstance().fromJson(jsonObject.toString(), (Type) tableClass));
-        }
-        return list;
-    }
-
-    private JSONObject fillJsonRecursively(JSONObject jsonObject, String[] explodedColumn, int index, Object value) {
-        if ("".equalsIgnoreCase(explodedColumn[index]))
-            return fillJsonRecursively(jsonObject, explodedColumn, index + 1, value);
-        if (explodedColumn.length - 1 == index) { //ultima occorrenza
-            return jsonObject.put(explodedColumn[index].endsWith("@Id") ? explodedColumn[index].replace("@Id", "") : explodedColumn[index], value);
-        } else {
-            if (!jsonObject.has(explodedColumn[index])) { // il json non contiene la colonna
-                if (explodedColumn[explodedColumn.length - 1].endsWith("@Id") && value != null) {
-                    jsonObject.put(explodedColumn[index], fillJsonRecursively(new JSONObject(), explodedColumn, index + 1, value));
-                }
-            } else {
-                jsonObject.put(explodedColumn[index], fillJsonRecursively(jsonObject.getJSONObject(explodedColumn[index]), explodedColumn, index + 1, value));
-            }
-            return jsonObject;
-        }
     }
 
     private <T> void fillPreparedStatement(PreparedStatement preparedStatement, T object, Object foreignKey) throws DatabaseException {
@@ -144,11 +103,6 @@ abstract class DatabaseManager {
         }
 //        Logger.i(readablePreparedStatement(preparedStatement));
     }
-
-
-    /**
-     * INSERT
-     */
 
     public <T> int insert(T object, Object foreingKey) throws DatabaseException {
         Connection connection;
@@ -208,10 +162,6 @@ abstract class DatabaseManager {
         return insert.toString();
     }
 
-    /**
-     * UTILITY
-     */
-
     public String getTableName() {
         return tableClass.getSimpleName();
     }
@@ -224,10 +174,6 @@ abstract class DatabaseManager {
         }
         return "id" + Util.capitalize(field.getName());
     }
-
-    /**
-     * DATABASE
-     */
 
     private void loadConfiguration() throws DatabaseException {
         ResourceBundle resource = ResourceBundle.getBundle("configuration");
