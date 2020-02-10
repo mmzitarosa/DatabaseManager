@@ -69,11 +69,11 @@ abstract class DatabaseManager {
         return result;
     }
 
-    private <T> void fillPreparedStatement(PreparedStatement preparedStatement, T object, Object foreignKey) throws DatabaseException {
+    private <T> void fillPreparedStatement(PreparedStatement preparedStatement, T object, Object foreignKey) throws GuitarBaseException {
         fillMultiplePreparedStatement(preparedStatement, object, foreignKey);
     }
 
-    private <T> void fillMultiplePreparedStatement(PreparedStatement preparedStatement, T object, Object... foreignKeys) throws DatabaseException {
+    private <T> void fillMultiplePreparedStatement(PreparedStatement preparedStatement, T object, Object... foreignKeys) throws GuitarBaseException {
         int count = 0;
         for (Object foreignKey : foreignKeys) {
             for (Field field : object.getClass().getDeclaredFields()) {
@@ -81,7 +81,9 @@ abstract class DatabaseManager {
                     Object value;
                     try {
                         if (field.getAnnotation(ForeignKey.class) != null) {
-                            if (field.getAnnotation(Required.class) != null && foreignKey == null)
+                            if (SqlUtil.valueFromField(field, object) != null) {
+                                value = SqlUtil.valueFromField(SqlUtil.primaryKeyFieldFromClass(field.getType()), SqlUtil.valueFromField(field, object));
+                            } else if (field.getAnnotation(Required.class) != null && foreignKey == null)
                                 throw new DatabaseException(field.getName() + " is required.");
                             else if (foreignKey == null)
                                 continue;
@@ -104,7 +106,11 @@ abstract class DatabaseManager {
 //        Logger.i(readablePreparedStatement(preparedStatement));
     }
 
-    public <T> int insert(T object, Object foreingKey) throws DatabaseException {
+    public <T> int insert(T object) throws GuitarBaseException {
+        return insert(object, null);
+    }
+
+    public <T> int insert(T object, Object foreingKey) throws GuitarBaseException {
         Connection connection;
         PreparedStatement preparedStatement;
         try {
@@ -124,18 +130,14 @@ abstract class DatabaseManager {
         return -1;
     }
 
-    private <T> String generateInsert(T object) throws DatabaseException {
-        return generateInsert(object, null);
-    }
-
-    private <T> String generateInsert(T object, Object foreignKey) throws DatabaseException {
+    private <T> String generateInsert(T object, Object foreignKey) throws GuitarBaseException {
         StringBuilder insert = new StringBuilder();
         boolean firstTime = true;
         int fields = 0;
         insert.append(" (");
         for (Field field : object.getClass().getDeclaredFields()) {
             if (field.getAnnotation(Auto.class) == null) {
-                if (field.getAnnotation(ForeignKey.class) != null) {
+                if (field.getAnnotation(ForeignKey.class) != null && SqlUtil.valueFromField(field, object) == null) {
                     if (field.getAnnotation(Required.class) != null && foreignKey == null)
                         throw new DatabaseException(field.getName() + " is required.");
                     else if (foreignKey == null)
