@@ -1,9 +1,9 @@
 package it.mmzitarosa.databasemanager.manager.sql;
 
 import it.mmzitarosa.databasemanager.io.StatusCode;
-import it.mmzitarosa.databasemanager.util.GuitarBaseException;
+import it.mmzitarosa.databasemanager.util.BaseException;
 
-public class SqlException extends GuitarBaseException {
+public class SqlException extends BaseException {
 
     public SqlException(String message) {
         super(message);

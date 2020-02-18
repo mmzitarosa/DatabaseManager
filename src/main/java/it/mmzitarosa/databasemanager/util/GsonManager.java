@@ -13,7 +13,7 @@ public class GsonManager {
     public static Gson getInstance() {
         if (gson == null) {
             GsonBuilder gsonBuilder = new GsonBuilder();
-//            gsonBuilder.serializeNulls();
+            gsonBuilder.serializeNulls();
             gson = gsonBuilder.create();
         }
         return gson;

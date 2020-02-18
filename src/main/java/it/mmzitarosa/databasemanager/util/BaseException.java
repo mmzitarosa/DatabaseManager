@@ -2,38 +2,38 @@ package it.mmzitarosa.databasemanager.util;
 
 import it.mmzitarosa.databasemanager.io.StatusCode;
 
-public abstract class GuitarBaseException extends Exception {
+public abstract class BaseException extends Exception {
 
     private StatusCode statusCode = setDefaultStatusCode();
 
-    public GuitarBaseException(String message) {
+    public BaseException(String message) {
         super(message);
     }
 
-    public GuitarBaseException(String message, Throwable cause) {
+    public BaseException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public GuitarBaseException(Throwable cause) {
+    public BaseException(Throwable cause) {
         super(cause);
     }
 
-    public GuitarBaseException(StatusCode statusCode) {
+    public BaseException(StatusCode statusCode) {
         super();
         this.statusCode = statusCode;
     }
 
-    public GuitarBaseException(StatusCode statusCode, String message) {
+    public BaseException(StatusCode statusCode, String message) {
         super(message);
         this.statusCode = statusCode;
     }
 
-    public GuitarBaseException(StatusCode statusCode, String message, Throwable cause) {
+    public BaseException(StatusCode statusCode, String message, Throwable cause) {
         super(message, cause);
         this.statusCode = statusCode;
     }
 
-    public GuitarBaseException(StatusCode statusCode, Throwable cause) {
+    public BaseException(StatusCode statusCode, Throwable cause) {
         super(cause);
         this.statusCode = statusCode;
     }

@@ -2,19 +2,20 @@ package it.mmzitarosa.databasemanager.model;
 
 import it.mmzitarosa.databasemanager.annotation.*;
 
-public class Prodotto {
+public class Product {
 
-    @Id @Auto
+    @Id
+    @Auto
     private int id;
     @Size(40)
-    private String codice;
+    private String code;
     @Required
     @ForeignKey
-    private Categoria categoria;
+    private Category category;
     @Required
     @Size(50)
-    private String marca;
+    private String brand;
     @Size(100)
-    private String descrizione;
-    private double prezzoVendita;
+    private String description;
+    private double price;
 }

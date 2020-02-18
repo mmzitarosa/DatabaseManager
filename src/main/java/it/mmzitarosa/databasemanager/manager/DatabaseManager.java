@@ -6,7 +6,7 @@ import it.mmzitarosa.databasemanager.annotation.Required;
 import it.mmzitarosa.databasemanager.io.StatusCode;
 import it.mmzitarosa.databasemanager.manager.sql.SqlGenerator;
 import it.mmzitarosa.databasemanager.manager.sql.SqlUtil;
-import it.mmzitarosa.databasemanager.util.GuitarBaseException;
+import it.mmzitarosa.databasemanager.util.BaseException;
 import it.mmzitarosa.databasemanager.util.Util;
 import javafx.util.Pair;
 
@@ -30,7 +30,7 @@ abstract class DatabaseManager {
     private String joinClause;
 
 
-    DatabaseManager() throws GuitarBaseException {
+    DatabaseManager() throws BaseException {
         loadConfiguration();
         this.tableClass = setTable();
 
@@ -69,11 +69,11 @@ abstract class DatabaseManager {
         return result;
     }
 
-    private <T> void fillPreparedStatement(PreparedStatement preparedStatement, T object, Object foreignKey) throws GuitarBaseException {
+    private <T> void fillPreparedStatement(PreparedStatement preparedStatement, T object, Object foreignKey) throws BaseException {
         fillMultiplePreparedStatement(preparedStatement, object, foreignKey);
     }
 
-    private <T> void fillMultiplePreparedStatement(PreparedStatement preparedStatement, T object, Object... foreignKeys) throws GuitarBaseException {
+    private <T> void fillMultiplePreparedStatement(PreparedStatement preparedStatement, T object, Object... foreignKeys) throws BaseException {
         int count = 0;
         for (Object foreignKey : foreignKeys) {
             for (Field field : object.getClass().getDeclaredFields()) {
@@ -106,11 +106,11 @@ abstract class DatabaseManager {
 //        Logger.i(readablePreparedStatement(preparedStatement));
     }
 
-    public <T> int insert(T object) throws GuitarBaseException {
+    public <T> int insert(T object) throws BaseException {
         return insert(object, null);
     }
 
-    public <T> int insert(T object, Object foreingKey) throws GuitarBaseException {
+    public <T> int insert(T object, Object foreingKey) throws BaseException {
         Connection connection;
         PreparedStatement preparedStatement;
         try {
@@ -130,7 +130,7 @@ abstract class DatabaseManager {
         return -1;
     }
 
-    private <T> String generateInsert(T object, Object foreignKey) throws GuitarBaseException {
+    private <T> String generateInsert(T object, Object foreignKey) throws BaseException {
         StringBuilder insert = new StringBuilder();
         boolean firstTime = true;
         int fields = 0;
